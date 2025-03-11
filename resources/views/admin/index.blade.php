@@ -21,7 +21,6 @@
                     <li><a class="dropdown-item" href="{{ route('suppliers.create') }}">Add Supplier</a></li>
                     <li><a class="dropdown-item" href="{{ route('purchases.create') }}">Add Purchase</a></li>
                     <li><a class="dropdown-item" href="{{ route('payments.create') }}">Add Payment</a></li>
-                    {{-- <li><a class="dropdown-item" href="{{ route('all.create') }}">Add All</a></li> --}}
                 </ul>
             </div>
 
@@ -511,7 +510,7 @@
                                     <div class="username"><strong>Payment #{{ $payment->id }}</strong></div>
                                     <div class="status">Order: #000{{ $payment->order->id }}</div>
                                     <div class="status">Customer: {{ $payment->order->customer->name }}</div>
-                                    <div class="status">Final Amount: ${{ number_format($payment->final_amount, 2) }}
+                                    <div class="status">Final Amount: Rs {{ number_format($payment->amount, 2) }}
                                     </div>
                                 </div>
 
