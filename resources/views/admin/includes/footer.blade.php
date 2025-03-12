@@ -79,7 +79,7 @@
 <!-- End Custom template -->
 </div>
 <!--   Core JS Files   -->
-<script src="{{ asset('admin/assets/js/core/jquery-3.7.1.min.js') }}"></script>
+
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
 <script src="{{ asset('admin/assets/js/core/popper.min.js') }}"></script>
 <script src="{{ asset('admin/assets/js/core/bootstrap.min.js') }}"></script>
@@ -144,10 +144,6 @@
     // data table initialization
     $(document).ready(function() {
         $("#basic-datatables").DataTable({});
-    });
-
-    $(document).ready(function() {
-        getAmounts('today'); // Call function only when the DOM is fully loaded
     });
 </script>
 </body>

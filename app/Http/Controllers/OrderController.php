@@ -11,7 +11,7 @@ use App\Models\Stage;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\Warehouse;
-use Barryvdh\DomPDF\Facade\Pdf As PDF;
+use Barryvdh\DomPDF\Facade\Pdf as PDF;
 
 class OrderController extends Controller
 {
@@ -29,9 +29,41 @@ class OrderController extends Controller
         return view('admin.orders.create', compact('customer', 'stage'));
     }
 
+    public function getdetails(Request $request)
+    {
+        $customer = Customer::where('name', $request->name)->first();
+
+        if ($customer) {
+            return response()->json($customer); // Return the customer details as JSON
+        } else {
+            return response()->json(null);
+        }
+    }
+
+
     public function store(Request $request)
     {
-        $id = Customer::where('name', $request->name)->value('id');
+        $id = Customer::where('name', $request->name)
+             ->where('email', $request->email)
+             ->value('id'); // Fetch only the ID
+        if ($id) {
+            $customer = Customer::find($id);
+            $customer->update([
+                'phone' => $request->phone,
+                'address' => $request->address,
+            ]);
+
+        } else {
+            $customer = Customer::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'address' => $request->address,
+            ]);
+            $id = $customer->id;
+
+            app(LogController::class)->insert('insert', 'customers', auth()->id(), $id);
+        }
 
         // Store the product data
         $ord = Order::create([
@@ -41,7 +73,7 @@ class OrderController extends Controller
             'stage_id' => $request->stage,
             'status' => $request->status,
         ]);
-        app(LogController::class)->insert('insert', 'orders', auth()->id(), $ord->id);
+        app(abstract: LogController::class)->insert('insert', 'orders', auth()->id(), $ord->id);
         return redirect()->route('orders.index')->with('success', 'Order created successfully.');
     }
 
@@ -65,7 +97,27 @@ class OrderController extends Controller
 
     public function update(Request $request, $id)
     {
-        $customer_id = Customer::where('name', $request->name)->value('id');
+        $cid = Customer::where('name', $request->name)
+             ->where('email', $request->email)
+             ->value('id'); // Fetch only the ID
+        if ($cid) {
+            $customer = Customer::find($cid);
+            $customer->update([
+                'phone' => $request->phone,
+                'address' => $request->address,
+            ]);
+        } else {
+            $customer = Customer::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'address' => $request->address,
+            ]);
+            $cid = $customer->id;
+            app(abstract: LogController::class)->insert('change Customer', 'orders', auth()->id(), $cid);
+
+        }
+
         $order = Order::find($id);
         if (!$order) {
             return redirect()->back()->with('error', 'Order not found.');
@@ -73,7 +125,7 @@ class OrderController extends Controller
 
         // Store the product data
         $order->update([
-            'customer_id' => $customer_id,
+            'customer_id' => $cid,
             'total_amount' => $request->amount,
             'order_date' => $request->date,
             'stage_id' => $request->stage,
@@ -265,7 +317,6 @@ class OrderController extends Controller
 
         $pdf = PDF::loadView('invoices.invoice', ['order' => $order]);
 
-        return $pdf->stream('invoice_'.$id.'.pdf');
-
+        return $pdf->stream('invoice_' . $id . '.pdf');
     }
 }

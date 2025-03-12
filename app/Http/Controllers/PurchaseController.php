@@ -10,7 +10,7 @@ use App\Models\supplier;
 use App\Models\Warehouse;
 use App\Models\Category;
 use App\Models\PurchaseTrans;
-use Barryvdh\DomPDF\Facade\Pdf As PDF;
+use Barryvdh\DomPDF\Facade\Pdf as PDF;
 
 class PurchaseController extends Controller
 {
@@ -27,9 +27,41 @@ class PurchaseController extends Controller
         return view('admin.purchases.create', compact('supplier'));
     }
 
+    public function getdetail_sup(Request $request)
+    {
+        $customer = Supplier::where('name', $request->name)->first();
+
+        if ($customer) {
+            return response()->json($customer); // Return the customer details as JSON
+        } else {
+            return response()->json(null);
+        }
+    }
+
+
     public function store(Request $request)
     {
-        $id = Supplier::where('name', $request->name)->value('id');
+        $id = Supplier::where('name', $request->name)
+            ->where('email', $request->email)
+            ->value('id'); // Fetch only the ID
+        if ($id) {
+            $customer = Supplier::find($id);
+            $customer->update([
+                'phone' => $request->phone,
+                'address' => $request->address,
+            ]);
+        } else {
+            $customer = Supplier::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'address' => $request->address,
+            ]);
+            $id = $customer->id;
+            app(LogController::class)->insert('insert', 'suppliers', auth()->id(), $id);
+
+        }
+
 
         // Store the product data
         $pur = Purchase::create([
@@ -61,7 +93,28 @@ class PurchaseController extends Controller
 
     public function update(Request $request, $id)
     {
-        $supplier_id = Supplier::where('name', $request->name)->value('id');
+        $cid = Supplier::where('name', $request->name)
+            ->where('email', $request->email)
+            ->value('id'); // Fetch only the ID
+        if ($cid) {
+            $customer = Supplier::find($cid);
+            $customer->update([
+                'phone' => $request->phone,
+                'address' => $request->address,
+            ]);
+        } else {
+            $customer = Supplier::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'address' => $request->address,
+            ]);
+            $cid = $customer->id;
+            app(abstract: LogController::class)->insert('change Supplier', 'purchases', auth()->id(), $cid);
+
+        }
+
+
         $order = Purchase::find($id);
         if (!$order) {
             return redirect()->back()->with('error', 'Purchase not found.');
@@ -69,7 +122,7 @@ class PurchaseController extends Controller
 
         // Store the product data
         $order->update([
-            'supplier_id' => $supplier_id,
+            'supplier_id' => $cid,
             'total_amount' => $request->amount,
             'order_date' => $request->date,
             'status' => $request->status,

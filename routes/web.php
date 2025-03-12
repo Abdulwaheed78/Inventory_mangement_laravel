@@ -83,6 +83,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('orders/delete/{id}', [OrderController::class, 'delproduct'])->name('orders.del_product');
     Route::get('orders/edit/{id}', [OrderController::class, 'editproduct'])->name('orders.edit_product');
     Route::post('orders/update/{id}', [OrderController::class, 'updateproduct'])->name('orders.update_product');
+    Route::post('orders/getdetails', [OrderController::class, 'getdetails'])->name('getdetails');
 
     //Purchase Route
     Route::resource('purchases', PurchaseController::class);
@@ -94,6 +95,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('purchases/delete/{id}', [PurchaseController::class, 'delproduct'])->name('purchases.del_product');
     Route::get('purchases/edit/{id}', [PurchaseController::class, 'editproduct'])->name('purchases.edit_product');
     Route::post('purchases/update/{id}', [PurchaseController::class, 'updateproduct'])->name('purchases.update_product');
+    Route::post('purchases/getdetails', [PurchaseController::class, 'getdetail_sup'])->name('getdetail_sup');
 
     // route for the index of logs
     Route::get('logs/', [LogController::class, 'index'])->name('logs.index');

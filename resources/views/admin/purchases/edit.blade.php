@@ -17,9 +17,28 @@
                             {{-- Customer Name --}}
                             <div class="col-sm-6 mb-3">
                                 <label for="customer">Customer Name:</label>
-                                <input type="text" name="name" id="customer" value="{{ $purchase->supplier->name }}"
+                                <input type="text" name="name" id="customer" onblur="loadDetails(this.value)" value="{{ $purchase->supplier->name }}"
                                     class="form-control" required>
                             </div>
+
+                            <div class="col-sm-6 mb-3">
+                                <label for="phone"> Email:</label>
+                                <input type="email" name="email" value="{{ $purchase->supplier->email }}" id="email"
+                                    class="form-control" required>
+                            </div>
+
+                            <div class="col-sm-6 mb-3">
+                                <label for="phone">Phone:</label>
+                                <input type="number" name="phone" value="{{ $purchase->supplier->phone }}" id="phone"
+                                    class="form-control">
+                            </div>
+
+                            <div class="col-sm-6 mb-3">
+                                <label for="customer">Address:</label>
+                                <textarea name="address" id="address" class="form-control">{{ $purchase->supplier->address }}</textarea>
+                            </div>
+
+                            <hr>
 
                             {{-- Total Amount --}}
                             <div class="col-sm-6 mb-3">
@@ -123,4 +142,33 @@
             source: customers
         });
     });
+
+    function loadDetails(name) {
+        $.ajax({
+            url: "/purchases/getdetails", // Replace with the correct route if needed
+            type: "POST",
+            data: {
+                name: name,
+                _token: $('meta[name="csrf-token"]').attr('content')
+            },
+
+            success: function(response) {
+                if (response && response.email) { // Ensure response is not null and has an email field
+                    $("#email").val(response.email);
+                    $("#email").prop("readonly", true);
+                    $("#phone").val(response.phone);
+                    $("#address").text(response.address);
+                } else {
+                    $("#email").prop("readonly", false); // Make it editable if response is null or empty
+                    $("#email").val('');
+                    $("#phone").val('');
+                    $("#address").text('');
+                }
+
+            },
+            error: function(xhr, status, error) {
+                console.error("Error:", error);
+            }
+        });
+    }
 </script>
