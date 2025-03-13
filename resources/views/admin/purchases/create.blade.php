@@ -37,7 +37,11 @@
 
                             <hr>
 
-                            {{-- Total Amount --}}
+                            <div class="col-sm-6 mb-3">
+                                <label for="date">Invoice No:</label>
+                                <input type="text" name="inv" id="inv" class="form-control" required>
+                            </div>
+
                             <div class="col-sm-6 mb-3">
                                 <label for="date">Purchase Date:</label>
                                 <input type="date" name="date" id="date"

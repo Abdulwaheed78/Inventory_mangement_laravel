@@ -25,13 +25,13 @@ class OrderController extends Controller
     public function create()
     {
         $customer = Customer::pluck('name')->toArray();
-        $stage = Stage::all();
+        $stage = Stage::where('deleted','no')->get();
         return view('admin.orders.create', compact('customer', 'stage'));
     }
 
     public function getdetails(Request $request)
     {
-        $customer = Customer::where('name', $request->name)->first();
+        $customer = Customer::where('deleted','no')->where('name', $request->name)->first();
 
         if ($customer) {
             return response()->json($customer); // Return the customer details as JSON
@@ -88,7 +88,7 @@ class OrderController extends Controller
 
     public function edit($id)
     {
-        $stage = Stage::all();
+        $stage = Stage::where('deleted','no')->get();
         $customer = Customer::pluck('name')->toArray();
         $order = Order::with(['customer'])->findOrFail($id);
         $products = OrderTrans::with(['products'])->where('order_id', $id)->get();
@@ -147,7 +147,7 @@ class OrderController extends Controller
     public function addproduct($id)
     {
         $order_id = $id;
-        $warehouse = Warehouse::all();
+        $warehouse = Warehouse::where('deleted','no')->get();
         return view('admin.orders.add_product', compact('order_id', 'warehouse'));
     }
 
@@ -172,7 +172,7 @@ class OrderController extends Controller
         $request->validate([
             'name' => 'required|string'
         ]);
-        $product = Product::where('name', 'like', '%' . $name . '%')->with(['warehouse', 'category'])
+        $product = Product::where('deleted','no')->where('name', 'like', '%' . $name . '%')->with(['warehouse', 'category'])
             ->first();
         return response()->json(['data' =>  $product]);
     }

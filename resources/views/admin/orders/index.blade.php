@@ -16,11 +16,12 @@
                         <table id="basic-datatables" class="display table table-striped table-hover">
                             <thead>
                                 <tr>
+                                    <th>Order Id </th>
                                     <th>Customer </th>
                                     <th>Date</th>
                                     <th>Amount</th>
                                     <th>Stage</th>
-                                    <th>Status</th>
+                                    <th>Payment</th>
                                     <th>Created At</th>
                                     <th>Action</th>
                                 </tr>
@@ -29,6 +30,7 @@
                             <tbody>
                                 @foreach ($orders as $Index => $order)
                                     <tr>
+                                        <td>{{ $order->id }}</td>
                                         <td>{{ $order->customer->name }}</td>
                                         <td>{{ date('d M Y', strtotime($order->order_date)) }}</td>
                                         <td>{{ $order->total_amount }}</td>

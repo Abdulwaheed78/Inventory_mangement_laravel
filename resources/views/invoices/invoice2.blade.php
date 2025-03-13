@@ -49,7 +49,7 @@
         <table style="width: 100%; border-collapse: collapse; margin-bottom:20px;">
             <tr>
                 <td style="padding: 5px; "><strong>Invoice #:</strong></td>
-                <td style="padding: 5px; ">{{ '#000' . $order->id }}</td>
+                <td style="padding: 5px; ">{{ $order->invoice_no }}</td>
             </tr>
             <tr>
                 <td style="padding:  5px; "><strong>Order ID:</strong></td>

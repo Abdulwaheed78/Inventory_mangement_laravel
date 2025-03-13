@@ -16,7 +16,7 @@ class CategoryController extends Controller
     // Display a list of categories
     public function index()
     {
-        $categories = Category::orderBy('id', 'desc')->get();
+        $categories = Category::where('deleted','no')->orderBy('id', 'desc')->get();
         return view('admin.categories.index', compact('categories')); // Return to a view
     }
 
@@ -79,7 +79,9 @@ class CategoryController extends Controller
     public function destroy($id)
     {
         $category = Category::findOrFail($id);
-        $category->delete();
+        $category->update([
+            'deleted'=>'yes',
+        ]);
         app(abstract: LogController::class)->insert('delete', 'category', auth()->id(), $id);
 
         return redirect()->route('categories.index')->with('success', 'Category deleted successfully.');
@@ -87,7 +89,7 @@ class CategoryController extends Controller
 
     public function stock()
     {
-        $data = Category::all();
+        $data = Category::where('deleted','no')->get();
         return view('admin.stocks.index', compact('data'));
     }
 

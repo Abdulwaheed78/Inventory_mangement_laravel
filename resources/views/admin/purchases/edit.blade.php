@@ -40,6 +40,10 @@
 
                             <hr>
 
+                            <div class="col-sm-6 mb-3">
+                                <label for="date"> Invoice No:</label>
+                                <input type="text" value="{{ $purchase->invoice_no }}" name="inv" id="inv" class="form-control" required>
+                            </div>
                             {{-- Total Amount --}}
                             <div class="col-sm-6 mb-3">
                                 <label for="date">Order Date:</label>

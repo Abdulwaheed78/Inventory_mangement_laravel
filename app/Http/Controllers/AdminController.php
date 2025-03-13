@@ -20,6 +20,7 @@ use App\Models\Order;
 use App\Models\Purchase;
 use App\Models\Log;
 use App\Models\Payment;
+use App\Models\PaymentMode;
 
 class AdminController extends Controller
 {
@@ -46,31 +47,32 @@ class AdminController extends Controller
 
     public function dashboard()
     {
-        $customers = Customer::orderBy('id', 'desc')->limit(5)->get();
-        $categories = Category::orderBy('id', 'desc')->limit(5)->get();
-        $warehouses = Warehouse::orderBy('id', 'desc')->limit(5)->get();
-        $stages = Stage::orderBy('id', 'desc')->limit(5)->get();
-        $products = Product::orderBy('id', 'desc')->limit(5)->get();
+        $customers = Customer::where('deleted', 'no')->orderBy('id', 'desc')->limit(5)->get();
+        $categories = Category::where('deleted', 'no')->orderBy('id', 'desc')->limit(5)->get();
+        $warehouses = Warehouse::where('deleted', 'no')->orderBy('id', 'desc')->limit(5)->get();
+        $stages = Stage::where('deleted', 'no')->orderBy('id', 'desc')->limit(5)->get();
+        $products = Product::where('deleted', 'no')->orderBy('id', 'desc')->limit(5)->get();
         $purchases = Purchase::with(['supplier'])->orderBy('id', 'desc')->limit(5)->get();
-        $suppliers = Supplier::orderBy('id', 'desc')->limit(value: 5)->get();
+        $suppliers = Supplier::where('deleted', 'no')->orderBy('id', 'desc')->limit(value: 5)->get();
         $orders = Order::with(['customer'])->orderBy('id', 'desc')->limit(5)->get();
         $logs = Log::with(['user'])->orderBy('id', 'desc')->limit(value: 10)->get();
         $payments = Payment::with(['order', 'pmode'])->orderBy('id', 'desc')->get();
-        $suppliers = Supplier::orderBy('id', 'desc')->limit(5)->get();
-
+        $suppliers = Supplier::where('deleted', 'no')->orderBy('id', 'desc')->limit(5)->get();
+        $pmodes = PaymentMode::where('deleted', 'no')->orderBy('id', 'desc')->limit(5)->get();
 
         // Total counts for dashboard
-        $totalCustomers = Customer::count();
-        $totalCategories = Category::count();
-        $totalWarehouses = Warehouse::count();
-        $totalStages = Stage::count();
-        $totalProducts = Product::count();
-        $totalSuppliers = Supplier::count();
+        $totalCustomers = Customer::where('deleted','no')->count();
+        $totalCategories = Category::where('deleted','no')->count();
+        $totalWarehouses = Warehouse::where('deleted','no')->count();
+        $totalStages = Stage::where('deleted','no')->count();
+        $totalProducts = Product::where('deleted','no')->count();
+        $totalSuppliers = Supplier::where('deleted','no')->count();
         $totalOrders = Order::count();
         $totalPurchaseOrders = Purchase::count();
         $totalLogs = Log::count();
         $totalPayments = Payment::sum('amount');
-        $totalSuppliers = Supplier::count();
+        $totalSuppliers = Supplier::where('deleted','no')->count();
+        $totalModes = PaymentMode::where('deleted','no')->count();
 
         return view('admin.index', compact(
             'customers',
@@ -94,7 +96,9 @@ class AdminController extends Controller
             'payments',
             'totalPayments',
             'totalSuppliers',
-            'suppliers'
+            'suppliers',
+            'pmodes',
+            'totalModes'
 
         ));
     }

@@ -11,7 +11,7 @@ class CustomerController extends Controller
     // Display a list of categories
     public function index()
     {
-        $customers = Customer::orderBy('id', 'desc')->get();
+        $customers = Customer::where('deleted','no')->orderBy('id', 'desc')->get();
         return view('admin.customers.index', compact('customers')); // Return to a view
     }
 
@@ -79,7 +79,9 @@ class CustomerController extends Controller
     public function destroy($id)
     {
         $customer = Customer::findOrFail($id);
-        $customer->delete();
+        $customer->update([
+            'deleted'=>'yes',
+        ]);
         app(LogController::class)->insert('delete', 'customers', auth()->id(), $id);
         return redirect()->route('customers.index')->with('success', 'Customer deleted successfully.');
     }
@@ -89,7 +91,7 @@ class CustomerController extends Controller
     {
         $search = $request->input('search');
 
-        $customers = Customer::where('name', 'LIKE', "%{$search}%")
+        $customers = Customer::where('deleted','no')->where('name', 'LIKE', "%{$search}%")
             ->limit(10)  // Limit results
             ->get(['id', 'name']);
 

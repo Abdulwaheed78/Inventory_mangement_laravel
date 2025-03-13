@@ -11,7 +11,7 @@ class Product extends Model
     protected $table = 'products'; // Specify the table name if not following Laravel's plural convention.
 
     // You can define fillable or guarded properties
-    protected $fillable = ['name','sku','category_id','price','stock_quantity','warehouse_id','status', 'description',];
+    protected $fillable = ['name','sku','category_id','price','stock_quantity','warehouse_id','status', 'description','deleted'];
 
     public function category(){
         return $this->belongsTo(Category::class);

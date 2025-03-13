@@ -23,13 +23,13 @@ class PurchaseController extends Controller
 
     public function create()
     {
-        $supplier = Supplier::pluck('name')->toArray();
+        $supplier = Supplier::where('deleted','no')->pluck('name')->toArray();
         return view('admin.purchases.create', compact('supplier'));
     }
 
     public function getdetail_sup(Request $request)
     {
-        $customer = Supplier::where('name', $request->name)->first();
+        $customer = Supplier::where('deleted','no')->where('name', $request->name)->first();
 
         if ($customer) {
             return response()->json($customer); // Return the customer details as JSON
@@ -66,9 +66,10 @@ class PurchaseController extends Controller
         // Store the product data
         $pur = Purchase::create([
             'supplier_id' => $id,
+            'invoice_no'=>$request->inv,
             'total_amount' => 0,
             'purchase_date' => $request->date,
-            'status' => $request->status,
+            'status' => $request->status
         ]);
         app(LogController::class)->insert('insert', 'purchases', auth()->id(), $pur->id);
         return redirect()->route('purchases.index')->with('success', 'Purchase created successfully.');
@@ -85,7 +86,7 @@ class PurchaseController extends Controller
 
     public function edit($id)
     {
-        $supplier = Supplier::pluck('name')->toArray();
+        $supplier = Supplier::where('deleted','no')->pluck('name')->toArray();
         $purchase = Purchase::with(['supplier'])->findOrFail($id);
         $products = PurchaseTrans::with(['products'])->where('purchase_id', $id)->get();
         return view('admin.purchases.edit', compact('supplier', 'purchase', 'products'));
@@ -123,9 +124,10 @@ class PurchaseController extends Controller
         // Store the product data
         $order->update([
             'supplier_id' => $cid,
+            'invoice_no'=> $request->inv,
             'total_amount' => $request->amount,
             'order_date' => $request->date,
-            'status' => $request->status,
+            'status' => $request->status
         ]);
         app(LogController::class)->insert('update', 'purchases', auth()->id(), $id);
         return redirect()->route('purchases.index')->with('success', 'Purchase Updated successfully.');
@@ -142,9 +144,9 @@ class PurchaseController extends Controller
     public function addproduct($id)
     {
         $order_id = $id;
-        $products = Product::with(['category', 'warehouse'])->get();
-        $warehouse = Warehouse::all();
-        $category = Category::all();
+        $products = Product::where('deleted','no')->with(['category', 'warehouse'])->get();
+        $warehouse = Warehouse::where('deleted','no')->get();
+        $category = Category::where('deleted','no')->get();
         return view('admin.purchases.add_product', compact('order_id', 'products', 'warehouse', 'category'));
     }
 
@@ -155,7 +157,7 @@ class PurchaseController extends Controller
             'name' => 'required|string'
         ]);
 
-        $products = Product::where('name', 'like', '%' . $name . '%')->where('status', 'active')->pluck('name');
+        $products = Product::where('deleted','no')->where('name', 'like', '%' . $name . '%')->where('status', 'active')->pluck('name');
 
         return response()->json([
             'status' => true,
@@ -170,7 +172,7 @@ class PurchaseController extends Controller
             'name' => 'required|string'
         ]);
 
-        $sku = Product::where('name', 'like', '%' . $name . '%')
+        $sku = Product::where('deleted','no')->where('name', 'like', '%' . $name . '%')
             ->select('sku')
             ->limit(1)
             ->value('sku'); // Retrieve only the SKU value
@@ -243,8 +245,8 @@ class PurchaseController extends Controller
     }
     public function editproduct($id)
     {
-        $category = Category::all();
-        $warehouse = Warehouse::all();
+        $category = Category::where('deleted','no')->get();
+        $warehouse = Warehouse::where('deleted','no')->get();
         $product = PurchaseTrans::with('products')->find($id);
 
         if (!$product) {

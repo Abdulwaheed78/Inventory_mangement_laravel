@@ -9,7 +9,7 @@ class PaymentModeController extends Controller
 {
     public function index()
     {
-        $modes = PaymentMode::all();
+        $modes = PaymentMode::where('deleted','no')->get();
         return view('admin.paymentmodes.index', compact('modes'));
     }
 
@@ -64,7 +64,9 @@ class PaymentModeController extends Controller
     public function destroy($id)
     {
         $stage = PaymentMode::findOrFail($id);
-        $stage->delete();
+        $stage->update([
+            'deleted'=>'yes',
+        ]);
         app(LogController::class)->insert('delete', 'payment_mode', auth()->id(), $id);
 
         return redirect()->route('modes.index')->with('success', 'Payment Mode deleted successfully.');

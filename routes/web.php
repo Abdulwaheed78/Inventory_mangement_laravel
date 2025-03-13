@@ -107,6 +107,8 @@ Route::middleware(['auth'])->group(function () {
     // route for the payment
     Route::resource('payments', PaymentController::class);
     Route::delete('payments/{payments}', [PaymentController::class, 'destroy'])->name('payments.delete');
+    Route::post('payments/getdetails', [PaymentController::class, 'getdetail_pay']);
+
 
     //for admin profile update
     Route::get('profile', [AdminController::class, 'profile'])->name('profile');
@@ -132,6 +134,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('dashboard/logs/export', [ReportController::class, 'logs_export'])->name('export_logs');
     Route::get('dashboard/orders/export', [ReportController::class, 'order_export'])->name('export_order');
     Route::get('dashboard/suppliers/export', [ReportController::class, 'supplier_export'])->name('export_supplier');
+    Route::get('dashboard/modes/export', [ReportController::class, 'pmode_export'])->name('export_pmode');
+
 
     //for getting payments in cards
     Route::post('dashboard/payments', [AdminController::class, 'getAmounts'])->name('get_payments');

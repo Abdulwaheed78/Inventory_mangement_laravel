@@ -12,6 +12,7 @@ use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\Supplier;
 use App\Models\Order;
+use App\Models\PaymentMode;
 use League\Csv\Writer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
@@ -20,7 +21,7 @@ class ReportController extends Controller
 {
     public function category_export()
     {
-        $categories = Category::all(['id', 'name', 'description', 'created_at']);
+        $categories = Category::where('deleted','no')->get();
         $csv = Writer::createFromString('');
         $csv->insertOne(['Srno', 'id', 'Name', 'Description', 'Created At']);
         foreach ($categories as $index => $category) {
@@ -40,7 +41,7 @@ class ReportController extends Controller
     }
     public function warehouse_export()
     {
-        $categories = Warehouse::all(['id', 'name', 'location', 'created_at']);
+        $categories = Warehouse::where('deleted','no')->get();
         $csv = Writer::createFromString('');
         $csv->insertOne(['Srno', 'id', 'Name', 'Location', 'Created At']);
         foreach ($categories as $index => $category) {
@@ -60,7 +61,7 @@ class ReportController extends Controller
     }
     public function stage_export()
     {
-        $categories = Stage::all(['id', 'name', 'created_at']);
+        $categories = Stage::where('deleted','no')->get();
         $csv = Writer::createFromString('');
         $csv->insertOne(['Srno', 'id', 'Name', 'Created At']);
         foreach ($categories as $index => $category) {
@@ -79,7 +80,7 @@ class ReportController extends Controller
     }
     public function product_export()
     {
-        $products = Product::with(['category', 'warehouse'])->get(); // Use get() instead of all()
+        $products = Product::with(['category', 'warehouse'])->where('deleted','no')->get(); // Use get() instead of all()
 
         $csv = Writer::createFromString('');
         $csv->insertOne(['Srno', 'ID', 'Name', 'SKU', 'Price', 'Description', 'Category', 'Stock Quantity', 'Warehouse', 'Status', 'Created At']);
@@ -132,7 +133,7 @@ class ReportController extends Controller
     }
     public function customer_export()
     {
-        $categories = Customer::all();
+        $categories = Customer::where('deleted','no')->get();
         $csv = Writer::createFromString('');
         $csv->insertOne(['Srno', 'id', 'Name', 'Email', 'Phone', 'Address', 'Created At']);
         foreach ($categories as $index => $category) {
@@ -226,7 +227,7 @@ class ReportController extends Controller
     }
     public function supplier_export()
     {
-        $categories = Supplier::all();
+        $categories = Supplier::where('deleted','no')->get();
         $csv = Writer::createFromString('');
         $csv->insertOne(['Srno', 'id', 'Name', 'Email', 'Phone', 'Address', 'Created At']);
         foreach ($categories as $index => $category) {
@@ -244,6 +245,27 @@ class ReportController extends Controller
         return Response::make($csv->toString(), 200, [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="suppliers.csv"',
+        ]);
+    }
+
+    public function pmode_export()
+    {
+        $categories = PaymentMode::where('deleted','no')->get();
+        $csv = Writer::createFromString('');
+        $csv->insertOne(['Srno', 'id', 'Name', 'Initial', 'Created At']);
+        foreach ($categories as $index => $category) {
+            $csv->insertOne([
+                $index + 1,
+                $category->id,
+                $category->name,
+                $category->initial,
+                $category->created_at,
+            ]);
+        }
+
+        return Response::make($csv->toString(), 200, [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="payment_modes.csv"',
         ]);
     }
 }

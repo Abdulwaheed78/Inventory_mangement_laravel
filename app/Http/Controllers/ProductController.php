@@ -13,14 +13,14 @@ class ProductController extends Controller
 {
     public function index()
     {
-        $products = Product::with(['category', 'warehouse'])->orderBy('id', 'desc')->get();
+        $products = Product::with(['category', 'warehouse'])->where('deleted','no')->orderBy('id', 'desc')->get();
         return view('admin.products.index', compact('products'));
     }
 
     public function create()
     {
-        $category = Category::all();
-        $warehouse = Warehouse::all();
+        $category = Category::where('deleted','no')->get();
+        $warehouse = Warehouse::where('deleted','no')->get();
         return view('admin.products.create', compact('category', 'warehouse'));
     }
 
@@ -55,16 +55,16 @@ class ProductController extends Controller
 
     public function show($id)
     {
-        $category = Category::all();
-        $warehouse = Warehouse::all();
+        $category = Category::where('deleted','no')->get();
+        $warehouse = Warehouse::where('deleted','no')->get();
         $product = Product::findOrFail($id);
         return view('admin.products.show', compact('product', 'category', 'warehouse'));
     }
 
     public function edit($id)
     {
-        $category = Category::all();
-        $warehouse = Warehouse::all();
+        $category = Category::where('deleted','no')->get();
+        $warehouse = Warehouse::where('deleted','no')->get();
         $product = Product::findOrFail($id);
         return view('admin.products.edit', compact('product', 'category', 'warehouse'));
     }
@@ -101,7 +101,9 @@ class ProductController extends Controller
     public function destroy($id)
     {
         $product = Product::findOrFail($id);
-        $product->delete();
+        $product->update([
+            'deleted'=>'yes',
+        ]);
         app(LogController::class)->insert('delete', 'products', auth()->id(), $id);
         return redirect()->route('products.index')->with('success', 'Product deleted successfully.');
     }

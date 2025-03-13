@@ -10,7 +10,7 @@ class SupplierController extends Controller
     // Display a list of suppliers
     public function index()
     {
-        $suppliers = Supplier::orderBy('id', 'desc')->get();
+        $suppliers = Supplier::where('deleted','no')->orderBy('id', 'desc')->get();
         return view('admin.suppliers.index', compact('suppliers')); // Return to a view
     }
 
@@ -78,7 +78,9 @@ class SupplierController extends Controller
     public function destroy($id)
     {
         $supplier = Supplier::findOrFail($id);
-        $supplier->delete();
+        $supplier->update([
+            'deleted'=>'yes',
+        ]);
         app(LogController::class)->insert('delete', 'suppliers', auth()->id(), $id);
         return redirect()->route('suppliers.index')->with('success', 'Supplier deleted successfully.');
     }

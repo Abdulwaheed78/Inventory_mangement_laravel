@@ -17,6 +17,7 @@
                             <thead>
                                 <tr>
                                     <th>Supplier</th>
+                                    <th>Invoice</th>
                                     <th>Date</th>
                                     <th>Amount</th>
                                     <th>Status</th>
@@ -29,6 +30,7 @@
                                 @foreach ($purchases as $Index => $purchase)
                                     <tr>
                                         <td>{{ $purchase->supplier->name }}</td>
+                                        <td>{{ $purchase->invoice_no }}</td>
                                         <td>{{ date('d M Y', strtotime($purchase->purchase_date)) }}</td>
                                         <td>{{ $purchase->total_amount }}</td>
                                         <td>{{ $purchase->status }}</td>

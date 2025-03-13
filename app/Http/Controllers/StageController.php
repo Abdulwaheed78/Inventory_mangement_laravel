@@ -11,7 +11,7 @@ class StageController extends Controller
     // Display a list of stages
     public function index()
     {
-        $stages = Stage::orderBy('id', 'desc')->get();
+        $stages = Stage::where('deleted', 'no')->orderBy('id', 'desc')->get();
         return view('admin.stages.index', compact('stages')); // Return to a view
     }
 
@@ -68,7 +68,9 @@ class StageController extends Controller
     public function destroy($id)
     {
         $stage = Stage::findOrFail($id);
-        $stage->delete();
+        $stage->update([
+            'deleted' => 'yes',
+        ]);
         app(LogController::class)->insert('delete', 'stages', auth()->id(), $id);
         return redirect()->route('stages.index')->with('success', 'Stage deleted successfully.');
     }

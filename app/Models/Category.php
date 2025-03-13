@@ -12,7 +12,7 @@ class Category extends Model
     protected $table = 'categories'; // Specify the table name if not following Laravel's plural convention.
 
     // You can define fillable or guarded properties
-    protected $fillable = ['name', 'description'];
+    protected $fillable = ['name', 'description','deleted'];
 
     // Optional: Relationship with products (if you want to add this)
     public function products()

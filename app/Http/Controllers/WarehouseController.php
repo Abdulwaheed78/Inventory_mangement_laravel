@@ -10,7 +10,7 @@ class WarehouseController extends Controller
 {
     public function index()
     {
-        $warehouses = Warehouse::orderBy('id', 'desc')->get();
+        $warehouses = Warehouse::where('deleted','no')->orderBy('id', 'desc')->get();
         return view('admin.warehouses.index', compact('warehouses')); // Return to a view
     }
 
@@ -72,7 +72,9 @@ class WarehouseController extends Controller
     public function destroy($id)
     {
         $Warehouse = Warehouse::findOrFail($id);
-        $Warehouse->delete();
+        $Warehouse->update([
+            'deleted'=>'yes',
+        ]);
         app(LogController::class)->insert('delete', 'warehouse', auth()->id(), $id);
         return redirect()->route('warehouses.index')->with('success', 'Warehouse deleted successfully.');
     }

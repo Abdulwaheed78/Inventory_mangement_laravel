@@ -467,7 +467,7 @@
 
     <!-- Products & Purchases (6-6 Pair) -->
     <div class="row">
-        <div class="col-md-12">
+        <div class="col-md-8">
             <div class="card card-round">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
@@ -509,6 +509,52 @@
 
                                     <form action="{{ route('products.delete', $product->id) }}" method="POST"
                                         onsubmit="return confirm('Are you sure you want to delete this Product?');">
+                                        @csrf
+                                        @method('DELETE')
+
+                                        <button type="submit" class="text-danger border-0 bg-transparent">
+                                            <i class="fa fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card card-round">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="card-title">Payment Modes ({{ $totalModes }})</div>
+                        <div>
+                            <a href="{{ route('modes.index') }}" class="text-primary">View All</a> |
+                            <a href="{{ route('export_pmode') }}" class="text-primary ml-2">
+                                Export
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-list py-4">
+                        @foreach ($pmodes as $stage)
+                            <div class="item-list d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar">
+                                        <span class="avatar-title rounded-circle border border-white bg-purple">S</span>
+                                    </div>
+                                    <div class="info-user ms-3">
+                                        <div class="username">{{ $stage->name }} | {{ $stage->initial }}</div>
+                                        <small
+                                            class="text-muted">{{ date('d M Y h:i A', strtotime($stage->created_at)) }}</small>
+                                    </div>
+                                </div>
+                                <div class="actions d-flex">
+                                    <a href="{{ route('modes.edit', $stage->id) }}" class="text-warning me-2"><i
+                                            class="fa fa-edit"></i></a>
+
+                                    <form action="{{ route('modes.delete', $stage->id) }}" method="POST"
+                                        onsubmit="return confirm('Are you sure you want to delete this Payment Mode?');">
                                         @csrf
                                         @method('DELETE')
 

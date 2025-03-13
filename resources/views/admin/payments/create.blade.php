@@ -15,7 +15,14 @@
                             @csrf
                             <div class="col-sm-6 mb-3">
                                 <label for="name">Order NO:</label>
-                                <input type="text" name="order" id="order" class="form-control" required>
+                                <input type="text" oninput="getAmount(this.value)" name="order" id="order"
+                                    class="form-control" required>
+                            </div>
+
+
+                            <div class="col-sm-12 mb-3">
+                                <label for="name">Order Details:</label>
+                                <div id="order_detail"></div>
                             </div>
 
                             <div class="col-sm-6 mb-3">
@@ -47,4 +54,64 @@
             </form>
         </div>
     </div>
+
+    <script>
+        function getAmount(order) {
+            $.ajax({
+                url: '/payments/getdetails',
+                type: 'POST',
+                data: {
+                    id: order,
+                    _token: $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    if (response.status === "success" && response.order) {
+                        let order = response.order; // Extract order data
+                        let orderHtml = `
+    <div class="card p-3">
+        <table class="table table-bordered">
+            <tbody>
+                <tr>
+                    <th>Order ID</th>
+                    <td>${order.id}</td>
+                    <th>Customer Name</th>
+                    <td>${order.customer ? order.customer.name : 'N/A'}</td>
+                </tr>
+                <tr>
+                    <th>Email</th>
+                    <td>${order.customer ? order.customer.email : 'N/A'}</td>
+                    <th>Phone</th>
+                    <td>${order.customer ? order.customer.phone : 'N/A'}</td>
+                </tr>
+                <tr>
+                    <th>Total Amount</th>
+                    <td>Rs ${order.total_amount}</td>
+                    <th>Stage</th>
+                    <td>${order.stage ? order.stage.name : 'N/A'}</td>
+                </tr>
+                <tr>
+                    <th>Payment Status</th>
+                    <td colspan="3">${order.status}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+`;
+
+
+
+                        $("#order_detail").html(orderHtml);
+                        $("#amount").val(order.total_amount).prop('readonly', true);
+                    } else {
+                        $("#order_detail").html("<p class='text-danger'>Order not found!</p>");
+                        $("#amount").prop('readonly', false);
+                    }
+                },
+
+                error: function(error) {
+                    console.log(error);
+                }
+            });
+        }
+    </script>
 @endsection

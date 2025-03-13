@@ -19,9 +19,30 @@ class PaymentController extends Controller
     // Show the form for creating a new suppliers
     public function create()
     {
-        $modes = PaymentMode::all();
+        $modes = PaymentMode::where('deleted','no')->get();
         return view('admin.payments.create', compact('modes'));
     }
+
+    public function getdetail_pay(Request $request)
+    {
+
+        if ($request->id) {
+            $order = Order::with(['customer', 'stage'])->where('id', $request->id)->first();
+
+            if ($order) {
+                return response()->json([
+                    'status' => 'success',
+                    'order' => $order
+                ]);
+            }
+        }
+
+        return response()->json([
+            'status' => 'error',
+            'message' => 'ID not found'
+        ]);
+    }
+
 
     // Store a newly created suppliers in storage
     public function store(Request $request)
@@ -53,9 +74,10 @@ class PaymentController extends Controller
 
     public function edit($id)
     {
-        $modes = PaymentMode::all();
-        $supplier = Payment::with(['order','pmode'])->findOrFail($id);
-        return view('admin.payments.edit', compact('supplier','modes'));
+        $modes = PaymentMode::where('deleted','no')->get();
+        $supplier = Payment::with(['order', 'pmode'])->findOrFail($id);
+        $order=Order::with(['customer','stage'])->where('id',$supplier->ordid)->first();
+        return view('admin.payments.edit', compact('supplier', 'modes','order'));
     }
 
     // Update the specified customer in storage
@@ -80,7 +102,7 @@ class PaymentController extends Controller
             $order->update([
                 'status' => 'Pending'
             ]);
-        }else if($order->total_amount == $request->amount){
+        } else if ($order->total_amount == $request->amount) {
             $order->update([
                 'status' => 'Received'
             ]);

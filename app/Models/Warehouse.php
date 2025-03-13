@@ -12,7 +12,7 @@ class Warehouse extends Model
     protected $table = 'warehouses'; // Specify the table name if not following Laravel's plural convention.
 
     // You can define fillable or guarded properties
-    protected $fillable = ['name', 'location'];
+    protected $fillable = ['name', 'location','deleted'];
 
     public function products(){
         return $this->hasMany('products');
