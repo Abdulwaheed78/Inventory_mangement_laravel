@@ -1,5 +1,88 @@
 @extends('admin.includes.app')
 @section('content')
+    <style>
+        .dashboard-chart-wrap {
+            position: relative;
+            width: 100%;
+        }
+
+        .dashboard-chart-wrap.chart-lg {
+            height: 340px;
+        }
+
+        .dashboard-chart-wrap.chart-md {
+            height: 340px;
+        }
+
+        .dashboard-chart-wrap.chart-sm {
+            height: 300px;
+        }
+
+        .dashboard-chart-wrap canvas {
+            width: 100% !important;
+            height: 100% !important;
+            display: block;
+        }
+
+        .dashboard-filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .dashboard-filter-select {
+            min-width: 170px;
+            max-width: 170px;
+            font-size: 0.9rem;
+            padding-top: 0.45rem;
+            padding-bottom: 0.45rem;
+        }
+
+        .dashboard-range-chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.42rem 0.75rem;
+            border-radius: 999px;
+            background: #e0f2fe;
+            color: #075985;
+            font-weight: 600;
+            font-size: 0.78rem;
+            line-height: 1.2;
+            white-space: nowrap;
+        }
+
+        .dashboard-modal-note {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        .dashboard-stat-card {
+            height: 100%;
+        }
+
+        .dashboard-stat-card .card-body {
+            min-height: 138px;
+            display: flex;
+            align-items: center;
+        }
+
+        .dashboard-stat-card .numbers {
+            min-width: 0;
+        }
+
+        .dashboard-stat-card .card-title {
+            margin-bottom: 0;
+            line-height: 1.2;
+            word-break: break-word;
+        }
+
+        .dashboard-stat-card #card_stock_value {
+            display: block;
+            margin-top: 4px;
+            line-height: 1.2;
+        }
+    </style>
     <div class="d-flex align-items-left align-items-md-center flex-column flex-md-row pt-2 pb-4">
         <div>
             <h3 class="fw-bold mb-3">Dashboard</h3>
@@ -24,23 +107,27 @@
                 </ul>
             </div>
 
-            <div class="mb-3">
-                <select class="form-select" id="filterSelect" onchange="getAmounts(this.value)">
+            <div class="mb-3 dashboard-filter-group">
+                <select class="form-select dashboard-filter-select" id="filterSelect" onchange="handleFilterChange(this.value)">
                     <option value="today">Today</option>
-                    <option value="week">This Week</option>
-                    <option value="month">This Month</option>
-                    <option value="year">This Year</option>
-                    <option value="all">Overall</option>
+                    <option value="7">Last 7 Days</option>
+                    <option value="30">Last 30 Days</option>
+                    <option value="60">Last 60 Days</option>
+                    <option value="90">Last 90 Days</option>
+                    <option value="180" selected>Last 180 Days</option>
+                    <option value="yearly">This Year</option>
+                    <option value="custom">Custom Range</option>
                 </select>
+                <span class="dashboard-range-chip" id="activeFilterLabel">Showing: Last 180 Days</span>
             </div>
         </div>
     </div>
 
     {{-- cards start --}}
-    <div class="row">
+    <div class="row mb-3">
         <!-- Total Orders Card -->
         <div class="col-md-3">
-            <div class="card card-stats card-round">
+            <div class="card card-stats card-round dashboard-stat-card">
                 <div class="card-body">
                     <div class="row align-items-center">
                         <div class="col-icon">
@@ -48,9 +135,9 @@
                                 <i class="fas fa-shopping-cart"></i>
                             </div>
                         </div>
-                        <div class="col col-stats ms-3 ms-sm-0">
+                        <div class="col col-stats ms-sm-0">
                             <div class="numbers">
-                                <p class="card-category">Orders Amount</p>
+                                <p class="card-category">Orders Total</p>
                                 <h4 class="card-title" id="card_order_amount"></h4>
                             </div>
                         </div>
@@ -61,7 +148,7 @@
 
         <!-- Total Purchase Orders Card -->
         <div class="col-md-3">
-            <div class="card card-stats card-round">
+            <div class="card card-stats card-round dashboard-stat-card">
                 <div class="card-body">
                     <div class="row align-items-center">
                         <div class="col-icon">
@@ -71,7 +158,7 @@
                         </div>
                         <div class="col col-stats ms-3 ms-sm-0">
                             <div class="numbers">
-                                <p class="card-category">Purchase Amount</p>
+                                <p class="card-category">Purchases Total</p>
                                 <h4 class="card-title" id="card_purchase_amount"></h4>
                             </div>
                         </div>
@@ -82,7 +169,7 @@
 
         <!-- Total Payments Card -->
         <div class="col-md-3">
-            <div class="card card-stats card-round">
+            <div class="card card-stats card-round dashboard-stat-card">
                 <div class="card-body">
                     <div class="row align-items-center">
                         <div class="col-icon">
@@ -92,7 +179,7 @@
                         </div>
                         <div class="col col-stats ms-3 ms-sm-0">
                             <div class="numbers">
-                                <p class="card-category">Total Revenue</p>
+                                <p class="card-category">Payments Received</p>
                                 <h4 class="card-title" id="card_revenue_amount"></h4>
                             </div>
                         </div>
@@ -103,7 +190,7 @@
 
         <!-- Total Products Card -->
         <div class="col-md-3">
-            <div class="card card-stats card-round">
+            <div class="card card-stats card-round dashboard-stat-card">
                 <div class="card-body">
                     <div class="row align-items-center">
                         <div class="col-icon">
@@ -113,8 +200,9 @@
                         </div>
                         <div class="col col-stats ms-3 ms-sm-0">
                             <div class="numbers">
-                                <p class="card-category">In Stock Products</p>
+                                <p class="card-category">Outstanding + Stock Value</p>
                                 <h4 class="card-title" id="card_instock_amount"></h4>
+                                <small class="text-muted" id="card_stock_value"></small>
                             </div>
                         </div>
                     </div>
@@ -123,6 +211,77 @@
         </div>
     </div>
     {{-- cards end  --}}
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card card-round">
+                <div class="card-header">
+                    <div class="card-title">Sales, Purchases, and Payments</div>
+                    <div class="card-category">Financial movement for the selected date range</div>
+                </div>
+                <div class="card-body">
+                    <div class="dashboard-chart-wrap chart-lg">
+                        <canvas id="salesOverviewChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card card-round">
+                <div class="card-header">
+                    <div class="card-title">Orders by Stage</div>
+                    <div class="card-category">Current pipeline distribution</div>
+                </div>
+                <div class="card-body">
+                    <div class="dashboard-chart-wrap chart-md">
+                        <canvas id="stageBreakdownChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card card-round">
+                <div class="card-header">
+                    <div class="card-title">Payment Collection by Mode</div>
+                    <div class="card-category">Received amount split across payment methods</div>
+                </div>
+                <div class="card-body">
+                    <div class="dashboard-chart-wrap chart-sm">
+                        <canvas id="paymentModeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="customRangeModal" tabindex="-1" aria-labelledby="customRangeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="customRangeModalLabel">Select Custom Date Range</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="dashboard-modal-note mb-3">Choose a start and end date to update the cards and all charts.</p>
+                    <div class="mb-3">
+                        <label for="startDate" class="form-label">Start Date</label>
+                        <input type="date" class="form-control" id="startDate" value="{{ now()->subDays(29)->toDateString() }}">
+                    </div>
+                    <div class="mb-0">
+                        <label for="endDate" class="form-label">End Date</label>
+                        <input type="date" class="form-control" id="endDate" value="{{ now()->toDateString() }}">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="applyCustomRange">Apply Range</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
 
     {{-- <div class="row">
@@ -413,7 +572,7 @@
             <div class="card card-round">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
-                        <h4 class="card-title">Payments ({{ $totalPayments }})</h4>
+                        <h4 class="card-title">Payments ({{ $totalPaymentRecords }})</h4>
                         <div>
                             <a href="{{ route('payments.index') }}" class="text-primary">View All</a> |
                             <a href="{{ route('export_payment') }}" class="text-primary ml-2">
@@ -425,18 +584,22 @@
                     <div class="card-list py-4">
                         @foreach ($payments as $payment)
                             <div class="item-list d-flex align-items-center justify-content-between border-bottom py-2">
+                                @php
+                                    $customerName = $payment->order->customer->name ?? 'N/A';
+                                    $orderId = $payment->order->id ?? 'N/A';
+                                @endphp
                                 <!-- Avatar -->
                                 <div class="avatar">
                                     <span class="avatar-title rounded-circle border border-white bg-success">
-                                        {{ strtoupper(substr($payment->order->customer->name, 0, 1)) }}
+                                        {{ strtoupper(substr($customerName, 0, 1)) }}
                                     </span>
                                 </div>
 
                                 <!-- Payment Info -->
                                 <div class="info-user ms-3 flex-grow-1">
                                     <div class="username"><strong>Payment #{{ $payment->id }}</strong></div>
-                                    <div class="status">Order: #000{{ $payment->order->id }}</div>
-                                    <div class="status">Customer: {{ $payment->order->customer->name }}</div>
+                                    <div class="status">Order: #000{{ $orderId }}</div>
+                                    <div class="status">Customer: {{ $customerName }}</div>
                                     <div class="status">Final Amount: Rs {{ number_format($payment->amount, 2) }}
                                     </div>
                                 </div>
@@ -834,20 +997,273 @@
     </div>
 
     <script>
+        let dashboardPayload = @json($dashboardData);
+        let salesOverviewChartInstance = null;
+        let stageBreakdownChartInstance = null;
+        let paymentModeChartInstance = null;
+        let customRangeModalInstance = null;
+
+        function formatCurrency(amount) {
+            const value = Number(amount || 0);
+            const absoluteValue = Math.abs(value);
+
+            if (absoluteValue >= 1000000) {
+                return `Rs ${ (value / 1000000).toFixed(1).replace(/\.0$/, '') }M`;
+            }
+
+            if (absoluteValue >= 100000) {
+                return `Rs ${ (value / 100000).toFixed(1).replace(/\.0$/, '') }L`;
+            }
+
+            if (absoluteValue >= 1000) {
+                return `Rs ${ (value / 1000).toFixed(1).replace(/\.0$/, '') }K`;
+            }
+
+            return `Rs ${ value.toFixed(2).replace(/\.00$/, '') }`;
+        }
+
+        function formatCurrencyFull(amount) {
+            return new Intl.NumberFormat('en-IN', {
+                style: 'currency',
+                currency: 'INR',
+                maximumFractionDigits: 2
+            }).format(Number(amount || 0));
+        }
+
+        function getFilterLabel(filterType) {
+            const labels = {
+                today: 'Today',
+                7: '7D',
+                30: '30D',
+                60: '60D',
+                90: '90D',
+                180: '180D',
+                yearly: 'Year',
+                custom: `${$('#startDate').val()} to ${$('#endDate').val()}`
+            };
+
+            return labels[filterType] || 'Custom Range';
+        }
+
+        function shortenChartLabel(label) {
+            if (!label) {
+                return '';
+            }
+
+            if (label.includes(' - ')) {
+                const [start, end] = label.split(' - ');
+                const shortStart = start.split(' ').slice(0, 2).join(' ');
+                const shortEnd = end.split(' ').slice(0, 2).join(' ');
+                return `${shortStart}-${shortEnd}`;
+            }
+
+            return label.length > 10 ? label.slice(0, 10) : label;
+        }
+
+        function renderDashboardCharts(payload) {
+            const salesContext = document.getElementById('salesOverviewChart');
+            if (salesContext) {
+                if (salesOverviewChartInstance) {
+                    salesOverviewChartInstance.destroy();
+                }
+
+                salesOverviewChartInstance = new Chart(salesContext, {
+                    type: 'line',
+                    data: {
+                        labels: payload.sales_chart.labels.map(shortenChartLabel),
+                        datasets: [{
+                                label: 'Orders',
+                                data: payload.sales_chart.orders,
+                                borderColor: '#2563eb',
+                                backgroundColor: 'rgba(37, 99, 235, 0.12)',
+                                borderWidth: 3,
+                                fill: true,
+                                tension: 0.35
+                            },
+                            {
+                                label: 'Purchases',
+                                data: payload.sales_chart.purchases,
+                                borderColor: '#f97316',
+                                backgroundColor: 'rgba(249, 115, 22, 0.08)',
+                                borderWidth: 3,
+                                fill: true,
+                                tension: 0.35
+                            },
+                            {
+                                label: 'Payments',
+                                data: payload.sales_chart.payments,
+                                borderColor: '#16a34a',
+                                backgroundColor: 'rgba(22, 163, 74, 0.08)',
+                                borderWidth: 3,
+                                fill: true,
+                                tension: 0.35
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${context.dataset.label}: ${formatCurrencyFull(context.parsed.y)}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: {
+                                    maxRotation: 0,
+                                    autoSkip: true,
+                                    maxTicksLimit: 8
+                                }
+                            },
+                            y: {
+                                ticks: {
+                                    callback: function(value) {
+                                        return formatCurrency(value);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            const stageContext = document.getElementById('stageBreakdownChart');
+            if (stageContext) {
+                if (stageBreakdownChartInstance) {
+                    stageBreakdownChartInstance.destroy();
+                }
+
+                stageBreakdownChartInstance = new Chart(stageContext, {
+                    type: 'doughnut',
+                    data: {
+                        labels: payload.stage_chart.labels,
+                        datasets: [{
+                            data: payload.stage_chart.values,
+                            backgroundColor: ['#2563eb', '#0ea5e9', '#14b8a6', '#f59e0b', '#ef4444', '#8b5cf6'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${context.label}: ${context.parsed}`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            const paymentContext = document.getElementById('paymentModeChart');
+            if (paymentContext) {
+                if (paymentModeChartInstance) {
+                    paymentModeChartInstance.destroy();
+                }
+
+                paymentModeChartInstance = new Chart(paymentContext, {
+                    type: 'bar',
+                    data: {
+                        labels: payload.payment_mode_chart.labels.map(shortenChartLabel),
+                        datasets: [{
+                            label: 'Amount Received',
+                            data: payload.payment_mode_chart.values,
+                            backgroundColor: ['#1d4ed8', '#0ea5e9', '#14b8a6', '#f59e0b', '#ef4444', '#8b5cf6'],
+                            borderRadius: 8,
+                            barPercentage: 0.45,
+                            categoryPercentage: 0.5,
+                            maxBarThickness: 24
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${context.label}: ${formatCurrencyFull(context.parsed.y)}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                ticks: {
+                                    callback: function(value) {
+                                        return formatCurrency(value);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function updateDashboardCards(response) {
+            $("#card_order_amount").text(formatCurrency(response.orders_total));
+            $("#card_purchase_amount").text(formatCurrency(response.purchases_total));
+            $("#card_revenue_amount").text(formatCurrency(response.payments_total));
+            $("#card_instock_amount").text("Outstanding: " + formatCurrency(response.outstanding_total));
+            $("#card_stock_value").text("Stock value: " + formatCurrency(response.stock_value_total));
+        }
+
+        function updateActiveFilterLabel(filterType) {
+            $('#activeFilterLabel').text(`Showing: ${getFilterLabel(filterType)}`);
+        }
+
+        function getFilterRequestData(filterType) {
+            const data = {
+                filter: filterType,
+                _token: $('meta[name="csrf-token"]').attr('content')
+            };
+
+            if (filterType === 'custom') {
+                data.start_date = $('#startDate').val();
+                data.end_date = $('#endDate').val();
+            }
+
+            return data;
+        }
+
+        function handleFilterChange(filterType) {
+            if (filterType === 'custom') {
+                customRangeModalInstance.show();
+                return;
+            }
+
+            getAmounts(filterType);
+        }
+
         function getAmounts(filterType) {
             $.ajax({
                 url: 'dashboard/payments',
                 type: 'POST',
-                data: {
-                    filter: filterType,
-                    _token: $('meta[name="csrf-token"]').attr('content')
-                },
+                data: getFilterRequestData(filterType),
                 success: function(response) {
-                    $("#card_order_amount").text("Rs " + response.total_order_amount);
-                    $("#card_purchase_amount").text("Rs " + response.total_purchase_amount);
-                    $("#card_revenue_amount").text("Rs " + response.net_amount);
-                    $("#card_instock_amount").text("Rs " + response.total_stock_value);
-
+                    dashboardPayload = response;
+                    updateDashboardCards(response);
+                    renderDashboardCharts(response);
+                    updateActiveFilterLabel(filterType);
                 },
                 error: function(xhr) {
                     console.log(xhr.responseText);
@@ -855,7 +1271,25 @@
             });
         }
         $(document).ready(function() {
-            getAmounts('today'); // Call function only when the DOM is fully loaded
+            customRangeModalInstance = new bootstrap.Modal(document.getElementById('customRangeModal'));
+            renderDashboardCharts(dashboardPayload);
+            updateDashboardCards(dashboardPayload);
+            updateActiveFilterLabel($('#filterSelect').val());
+
+            $('#applyCustomRange').on('click', function() {
+                if (!$('#startDate').val() || !$('#endDate').val()) {
+                    return;
+                }
+
+                if ($('#startDate').val() > $('#endDate').val()) {
+                    return;
+                }
+
+                getAmounts('custom');
+                customRangeModalInstance.hide();
+            });
+
+            getAmounts($('#filterSelect').val());
         });
     </script>
 @endsection

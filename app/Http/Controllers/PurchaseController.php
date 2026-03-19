@@ -126,7 +126,7 @@ class PurchaseController extends Controller
             'supplier_id' => $cid,
             'invoice_no'=> $request->inv,
             'total_amount' => $request->amount,
-            'order_date' => $request->date,
+            'purchase_date' => $request->date,
             'status' => $request->status
         ]);
         app(LogController::class)->insert('update', 'purchases', auth()->id(), $id);

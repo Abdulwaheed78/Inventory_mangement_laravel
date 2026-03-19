@@ -61,12 +61,7 @@ class PaymentController extends Controller
             'date' => $request->date
         ]);
 
-        $order = Order::find($request->order);
-        if ($order->total_amount == $request->amount) {
-            $order->update([
-                'status' => 'Received'
-            ]);
-        }
+        $this->syncOrderPaymentStatus((int) $request->order);
 
         app(LogController::class)->insert('insert', 'payments', auth()->id(), $sup->id);
         return redirect()->route('payments.index')->with('success', 'Payment created successfully.');
@@ -90,23 +85,22 @@ class PaymentController extends Controller
             'date' => 'nullable',
         ]);
 
-        $sup = Payment::find($id)->update([
+        $payment = Payment::findOrFail($id);
+        $originalOrderId = (int) $payment->ordid;
+
+        $payment->update([
             'ordid' => $request->order,
             'pmid' => $request->mode,
             'amount' => $request->amount,
             'date' => $request->date
         ]);
 
-        $order = Order::find($request->order);
-        if ($order->total_amount > $request->amount) {
-            $order->update([
-                'status' => 'Pending'
-            ]);
-        } else if ($order->total_amount == $request->amount) {
-            $order->update([
-                'status' => 'Received'
-            ]);
+        if ($originalOrderId !== (int) $request->order) {
+            $this->syncOrderPaymentStatus($originalOrderId);
         }
+
+        $this->syncOrderPaymentStatus((int) $request->order);
+
         app(LogController::class)->insert('update', 'payments', auth()->id(), $id);
         return redirect()->route('payments.index')->with('success', 'Payment updated successfully.');
     }
@@ -114,9 +108,29 @@ class PaymentController extends Controller
     // Remove the specified customer from storage
     public function destroy($id)
     {
-        $supplier = Payment::findOrFail($id);
-        $supplier->delete();
+        $payment = Payment::findOrFail($id);
+        $orderId = (int) $payment->ordid;
+        $payment->delete();
+        $this->syncOrderPaymentStatus($orderId);
         app(LogController::class)->insert('delete', 'payments', auth()->id(), $id);
         return redirect()->route('payments.index')->with('success', 'Payment deleted successfully.');
+    }
+
+    private function syncOrderPaymentStatus(int $orderId): void
+    {
+        $order = Order::find($orderId);
+
+        if (!$order) {
+            return;
+        }
+
+        $paidAmount = (float) Payment::where('ordid', $orderId)->sum('amount');
+        $status = $paidAmount >= (float) $order->total_amount && $order->total_amount > 0
+            ? 'Received'
+            : 'Pending';
+
+        $order->update([
+            'status' => $status,
+        ]);
     }
 }

@@ -53,26 +53,33 @@ class AdminController extends Controller
         $stages = Stage::where('deleted', 'no')->orderBy('id', 'desc')->limit(5)->get();
         $products = Product::where('deleted', 'no')->orderBy('id', 'desc')->limit(5)->get();
         $purchases = Purchase::with(['supplier'])->orderBy('id', 'desc')->limit(5)->get();
-        $suppliers = Supplier::where('deleted', 'no')->orderBy('id', 'desc')->limit(value: 5)->get();
-        $orders = Order::with(['customer'])->orderBy('id', 'desc')->limit(5)->get();
-        $logs = Log::with(['user'])->orderBy('id', 'desc')->limit(value: 10)->get();
-        $payments = Payment::with(['order', 'pmode'])->orderBy('id', 'desc')->get();
         $suppliers = Supplier::where('deleted', 'no')->orderBy('id', 'desc')->limit(5)->get();
+        $orders = Order::with(['customer'])->orderBy('id', 'desc')->limit(5)->get();
+        $logs = Log::with(['user'])->orderBy('id', 'desc')->limit(10)->get();
+        $payments = Payment::with(['order.customer', 'pmode'])->orderBy('date', 'desc')->limit(8)->get();
         $pmodes = PaymentMode::where('deleted', 'no')->orderBy('id', 'desc')->limit(5)->get();
 
-        // Total counts for dashboard
-        $totalCustomers = Customer::where('deleted','no')->count();
-        $totalCategories = Category::where('deleted','no')->count();
-        $totalWarehouses = Warehouse::where('deleted','no')->count();
-        $totalStages = Stage::where('deleted','no')->count();
-        $totalProducts = Product::where('deleted','no')->count();
-        $totalSuppliers = Supplier::where('deleted','no')->count();
+        $totalCustomers = Customer::where('deleted', 'no')->count();
+        $totalCategories = Category::where('deleted', 'no')->count();
+        $totalWarehouses = Warehouse::where('deleted', 'no')->count();
+        $totalStages = Stage::where('deleted', 'no')->count();
+        $totalProducts = Product::where('deleted', 'no')->count();
+        $totalSuppliers = Supplier::where('deleted', 'no')->count();
         $totalOrders = Order::count();
         $totalPurchaseOrders = Purchase::count();
         $totalLogs = Log::count();
-        $totalPayments = Payment::sum('amount');
-        $totalSuppliers = Supplier::where('deleted','no')->count();
-        $totalModes = PaymentMode::where('deleted','no')->count();
+        $totalPaymentRecords = Payment::count();
+        $totalModes = PaymentMode::where('deleted', 'no')->count();
+
+        $totalOrderAmount = (float) Order::sum('total_amount');
+        $totalPurchaseAmount = (float) Purchase::sum('total_amount');
+        $totalReceivedAmount = (float) Payment::sum('amount');
+        $totalOutstandingAmount = max($totalOrderAmount - $totalReceivedAmount, 0);
+        $totalStockValue = (float) Product::where('deleted', 'no')
+            ->selectRaw('COALESCE(SUM(stock_quantity * price), 0) as total_stock_value')
+            ->value('total_stock_value');
+
+        $dashboardData = $this->buildDashboardData('180');
 
         return view('admin.index', compact(
             'customers',
@@ -94,64 +101,47 @@ class AdminController extends Controller
             'totalLogs',
             'logs',
             'payments',
-            'totalPayments',
-            'totalSuppliers',
-            'suppliers',
+            'totalPaymentRecords',
             'pmodes',
-            'totalModes'
-
+            'totalModes',
+            'totalOrderAmount',
+            'totalPurchaseAmount',
+            'totalReceivedAmount',
+            'totalOutstandingAmount',
+            'totalStockValue',
+            'dashboardData'
         ));
     }
 
     public function getAmounts(Request $request)
     {
-        $filter = $request->filter;
-
-        // Apply date filters based on selection
-        $dateRange = $this->getDateRange($filter);
-
-        // Convert to correct date format
-        $startDate = Carbon::parse($dateRange['start'])->format('Y-m-d H:i:s');
-        $endDate = Carbon::parse($dateRange['end'])->format('Y-m-d H:i:s');
-
-        // Sum of Order `total_amount`
-        $totalOrderAmount = Order::whereBetween('created_at', [$startDate, $endDate])->sum('total_amount');
-
-        // Sum of Purchase `total_amount`
-        $totalPurchaseAmount = Purchase::whereBetween('created_at', [$startDate, $endDate])->sum('total_amount');
-
-        // Total Orders - Total Purchases
-        $netAmount = $totalOrderAmount - $totalPurchaseAmount;
-
-        // Total Products Stock Value (stock_quantity * price)
-        $totalStockValue = Product::select(DB::raw('SUM(stock_quantity * price) as total_stock_value'))
-            ->value('total_stock_value');
-
-        return response()->json([
-            'total_order_amount' => $totalOrderAmount,
-            'total_purchase_amount' => $totalPurchaseAmount,
-            'net_amount' => $netAmount,
-            'total_stock_value' => $totalStockValue
-        ]);
+        return response()->json(
+            $this->buildDashboardData(
+                $request->filter,
+                $request->start_date,
+                $request->end_date
+            )
+        );
     }
 
     /**
      * Get start and end date based on filter type.
      */
-    private function getDateRange($filter)
+    private function getDateRange($filter, $customStart = null, $customEnd = null)
     {
         if ($filter == 'today') {
             $start = now()->startOfDay()->format('Y-m-d H:i:s');
             $end = now()->endOfDay()->format('Y-m-d H:i:s');
-        } elseif ($filter == 'week') {
-            $start = now()->startOfWeek()->format('Y-m-d H:i:s');
-            $end = now()->endOfWeek()->format('Y-m-d H:i:s');
-        } elseif ($filter == 'month') {
-            $start = now()->startOfMonth()->format('Y-m-d H:i:s');
-            $end = now()->endOfMonth()->format('Y-m-d H:i:s');
-        } elseif ($filter == 'year') {
+        } elseif (in_array((string) $filter, ['7', '30', '60', '90', '180'], true)) {
+            $days = (int) $filter - 1;
+            $start = now()->subDays($days)->startOfDay()->format('Y-m-d H:i:s');
+            $end = now()->endOfDay()->format('Y-m-d H:i:s');
+        } elseif ($filter == 'yearly') {
             $start = now()->startOfYear()->format('Y-m-d H:i:s');
             $end = now()->endOfYear()->format('Y-m-d H:i:s');
+        } elseif ($filter == 'custom' && $customStart && $customEnd) {
+            $start = Carbon::parse($customStart)->startOfDay()->format('Y-m-d H:i:s');
+            $end = Carbon::parse($customEnd)->endOfDay()->format('Y-m-d H:i:s');
         } elseif ($filter == 'all') {
             $start = '2000-01-01 00:00:00';
             $end = now()->format('Y-m-d H:i:s');
@@ -161,6 +151,191 @@ class AdminController extends Controller
         }
 
         return ['start' => $start, 'end' => $end];
+    }
+
+    private function buildDashboardData($filter, $customStart = null, $customEnd = null)
+    {
+        $dateRange = $this->getDateRange($filter, $customStart, $customEnd);
+        $startDate = Carbon::parse($dateRange['start']);
+        $endDate = Carbon::parse($dateRange['end']);
+
+        $totalOrderAmount = (float) Order::whereBetween('order_date', [
+            $startDate->toDateString(),
+            $endDate->toDateString(),
+        ])->sum('total_amount');
+
+        $totalPurchaseAmount = (float) Purchase::whereBetween('purchase_date', [
+            $startDate->toDateString(),
+            $endDate->toDateString(),
+        ])->sum('total_amount');
+
+        $totalReceivedAmount = (float) Payment::whereBetween('date', [
+            $startDate->copy()->startOfDay(),
+            $endDate->copy()->endOfDay(),
+        ])->sum('amount');
+
+        $totalStockValue = (float) Product::where('deleted', 'no')
+            ->select(DB::raw('COALESCE(SUM(stock_quantity * price), 0) as total_stock_value'))
+            ->value('total_stock_value');
+
+        return [
+            'orders_total' => $totalOrderAmount,
+            'purchases_total' => $totalPurchaseAmount,
+            'payments_total' => $totalReceivedAmount,
+            'outstanding_total' => max($totalOrderAmount - $totalReceivedAmount, 0),
+            'stock_value_total' => $totalStockValue,
+            'sales_chart' => $this->getSalesChartData($startDate, $endDate, $filter),
+            'stage_chart' => $this->getStageChartData($startDate, $endDate),
+            'payment_mode_chart' => $this->getPaymentModeChartData($startDate, $endDate),
+        ];
+    }
+
+    private function getSalesChartData(Carbon $startDate, Carbon $endDate, $filter)
+    {
+        $labels = [];
+        $orders = [];
+        $purchases = [];
+        $payments = [];
+        $diffInDays = $startDate->diffInDays($endDate) + 1;
+        $diffInYears = $startDate->diffInYears($endDate);
+
+        if ($diffInDays <= 30) {
+            $cursor = $startDate->copy()->startOfDay();
+            $last = $endDate->copy()->startOfDay();
+
+            while ($cursor->lte($last)) {
+                $periodStart = $cursor->copy()->startOfDay();
+                $periodEnd = $cursor->copy()->endOfDay();
+
+                $labels[] = $cursor->format('d M');
+                $orders[] = (float) Order::whereDate('order_date', $periodStart->toDateString())->sum('total_amount');
+                $purchases[] = (float) Purchase::whereDate('purchase_date', $periodStart->toDateString())->sum('total_amount');
+                $payments[] = (float) Payment::whereBetween('date', [$periodStart, $periodEnd])->sum('amount');
+
+                $cursor->addDay();
+            }
+        } elseif ($diffInDays <= 90) {
+            $cursor = $startDate->copy()->startOfWeek();
+            $last = $endDate->copy()->endOfWeek();
+
+            while ($cursor->lte($last)) {
+                $periodStart = $cursor->copy()->max($startDate->copy()->startOfDay());
+                $periodEnd = $cursor->copy()->endOfWeek()->min($endDate->copy()->endOfDay());
+
+                $labels[] = $periodStart->format('d M') . ' - ' . $periodEnd->format('d M');
+                $orders[] = (float) Order::whereBetween('order_date', [
+                    $periodStart->toDateString(),
+                    $periodEnd->toDateString(),
+                ])->sum('total_amount');
+                $purchases[] = (float) Purchase::whereBetween('purchase_date', [
+                    $periodStart->toDateString(),
+                    $periodEnd->toDateString(),
+                ])->sum('total_amount');
+                $payments[] = (float) Payment::whereBetween('date', [
+                    $periodStart->copy()->startOfDay(),
+                    $periodEnd->copy()->endOfDay(),
+                ])->sum('amount');
+
+                $cursor->addWeek();
+            }
+        } elseif ($diffInYears < 3 || $filter === 'yearly') {
+            $cursor = $startDate->copy()->startOfMonth();
+            $last = $endDate->copy()->startOfMonth();
+
+            while ($cursor->lte($last)) {
+                $periodStart = $cursor->copy()->startOfMonth()->max($startDate->copy()->startOfDay());
+                $periodEnd = $cursor->copy()->endOfMonth()->min($endDate->copy()->endOfDay());
+
+                $labels[] = $cursor->format('M Y');
+                $orders[] = (float) Order::whereBetween('order_date', [
+                    $periodStart->toDateString(),
+                    $periodEnd->toDateString(),
+                ])->sum('total_amount');
+                $purchases[] = (float) Purchase::whereBetween('purchase_date', [
+                    $periodStart->toDateString(),
+                    $periodEnd->toDateString(),
+                ])->sum('total_amount');
+                $payments[] = (float) Payment::whereBetween('date', [
+                    $periodStart->copy()->startOfDay(),
+                    $periodEnd->copy()->endOfDay(),
+                ])->sum('amount');
+
+                $cursor->addMonth();
+            }
+        } else {
+            $cursor = $startDate->copy()->startOfYear();
+            $last = $endDate->copy()->startOfYear();
+
+            while ($cursor->lte($last)) {
+                $periodStart = $cursor->copy()->startOfYear()->max($startDate->copy()->startOfDay());
+                $periodEnd = $cursor->copy()->endOfYear()->min($endDate->copy()->endOfDay());
+
+                $labels[] = $cursor->format('Y');
+                $orders[] = (float) Order::whereBetween('order_date', [
+                    $periodStart->toDateString(),
+                    $periodEnd->toDateString(),
+                ])->sum('total_amount');
+                $purchases[] = (float) Purchase::whereBetween('purchase_date', [
+                    $periodStart->toDateString(),
+                    $periodEnd->toDateString(),
+                ])->sum('total_amount');
+                $payments[] = (float) Payment::whereBetween('date', [
+                    $periodStart->copy()->startOfDay(),
+                    $periodEnd->copy()->endOfDay(),
+                ])->sum('amount');
+
+                $cursor->addYear();
+            }
+        }
+
+        return [
+            'labels' => $labels,
+            'orders' => $orders,
+            'purchases' => $purchases,
+            'payments' => $payments,
+        ];
+    }
+
+    private function getStageChartData(Carbon $startDate, Carbon $endDate)
+    {
+        $stageCounts = Stage::where('deleted', 'no')
+            ->leftJoin('orders', 'stages.id', '=', 'orders.stage_id')
+            ->where(function ($query) use ($startDate, $endDate) {
+                $query->whereBetween('orders.order_date', [
+                    $startDate->toDateString(),
+                    $endDate->toDateString(),
+                ])->orWhereNull('orders.order_date');
+            })
+            ->groupBy('stages.id', 'stages.name')
+            ->orderBy('stages.name')
+            ->select('stages.name', DB::raw('COUNT(orders.id) as total_orders'))
+            ->get();
+
+        return [
+            'labels' => $stageCounts->pluck('name')->toArray(),
+            'values' => $stageCounts->pluck('total_orders')->map(fn ($value) => (int) $value)->toArray(),
+        ];
+    }
+
+    private function getPaymentModeChartData(Carbon $startDate, Carbon $endDate)
+    {
+        $modeTotals = PaymentMode::where('payment_modes.deleted', 'no')
+            ->leftJoin('payments', 'payment_modes.id', '=', 'payments.pmid')
+            ->where(function ($query) use ($startDate, $endDate) {
+                $query->whereBetween('payments.date', [
+                    $startDate->copy()->startOfDay(),
+                    $endDate->copy()->endOfDay(),
+                ])->orWhereNull('payments.date');
+            })
+            ->groupBy('payment_modes.id', 'payment_modes.name')
+            ->orderBy('payment_modes.name')
+            ->select('payment_modes.name', DB::raw('COALESCE(SUM(payments.amount), 0) as total_amount'))
+            ->get();
+
+        return [
+            'labels' => $modeTotals->pluck('name')->toArray(),
+            'values' => $modeTotals->pluck('total_amount')->map(fn ($value) => (float) $value)->toArray(),
+        ];
     }
 
     public function logout(Request $request)

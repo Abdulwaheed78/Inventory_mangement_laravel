@@ -3,9 +3,10 @@
 
 <head>
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>@yield('title', 'Ims Dashboard')</title>
+    <title>@yield('title', 'Inventory Pro Dashboard')</title>
     <meta content="width=device-width, initial-scale=1.0, shrink-to-fit=no" name="viewport" />
-    <link rel="icon" href="{{ asset('admin/assets/img/ims.png') }}" type="image/x-icon" />
+    <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any" />
+    <link rel="icon" href="{{ asset('admin/assets/img/inventory-pro-mark.svg') }}" type="image/svg+xml" />
     <!-- Font Awesome 6 CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
@@ -34,6 +35,44 @@
     <link rel="stylesheet" href="{{ asset('admin/assets/css/bootstrap.min.css') }}" />
     <link rel="stylesheet" href="{{ asset('admin/assets/css/plugins.min.css') }}" />
     <link rel="stylesheet" href="{{ asset('admin/assets/css/kaiadmin.min.css') }}" />
+    <style>
+        .app-logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            color: #0f172a;
+            font-weight: 700;
+            font-size: 1rem;
+            letter-spacing: 0.03em;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .app-logo:hover {
+            color: #1d4ed8;
+            text-decoration: none;
+        }
+
+        .app-logo img {
+            height: 60px;
+            width: auto;
+            display: block;
+        }
+
+        .app-logo span {
+            display: inline-block;
+            line-height: 1.1;
+        }
+
+        .app-logo small {
+            display: block;
+            color: #64748b;
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+        }
+    </style>
     {{-- for csrf  --}}
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <script src="{{ asset('admin/assets/js/core/jquery-3.7.1.min.js') }}"></script>
@@ -47,8 +86,12 @@
             <div class="sidebar-logo">
                 <!-- Logo Header -->
                 <div class="logo-header" data-background-color="white">
-                    <a href="{{ route('dashboard') }}" class="logo">
-                        <img src="{{ asset('admin/assets/img/ims.png') }}" alt="NO IMG" height="35px"> &nbsp;&nbsp;IMS Abdul
+                    <a href="{{ route('dashboard') }}" class="logo app-logo">
+                        <img src="{{ asset('admin/assets/img/inventory-pro-logo.svg') }}" alt="Inventory Pro logo">
+                        <!-- <span>
+                            Inventory Pro
+                            <small>Control Center</small>
+                        </span> -->
                     </a>
                     <div class="nav-toggle">
                         <button class="btn btn-toggle toggle-sidebar">
@@ -184,9 +227,12 @@
                 <div class="main-header-logo">
                     <!-- Logo Header -->
                     <div class="logo-header" data-background-color="white">
-                        <a href="{{ route('dashboard') }}" class="logo">
-                            {{-- <img src="{{ asset('admin/assets/img/kaiadmin/logo_light.svg') }}" alt="navbar brand"
-                                class="navbar-brand" height="20" /> --}}
+                        <a href="{{ route('dashboard') }}" class="logo app-logo">
+                            <img src="{{ asset('admin/assets/img/inventory-pro-logo.svg') }}" alt="Inventory Pro logo">
+                            <span>
+                                Inventory Pro
+                                <small>Control Center</small>
+                            </span>
                         </a>
                         <div class="nav-toggle">
                             <button class="btn btn-toggle toggle-sidebar">

@@ -13,11 +13,12 @@
         <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
             <tr>
                 <td style="text-transform: uppercase; font-size: 24px; font-weight: bold; padding: 10px;">
-                    Order Invoice From IMS Abdul
+                    Order Invoice From Inventory Pro
                 </td>
-                {{-- <td style="text-align: right; padding: 10px;">
-                    <img src="{{ asset('admin/assets/img/ims.png') }}" alt="Logo" style="width: 135px; height: 44px;">
-                </td> --}}
+                <td style="text-align: right; padding: 10px;">
+                    <img src="{{ asset('admin/assets/img/inventory-pro-logo.svg') }}" alt="Inventory Pro logo"
+                        style="width: 180px; height: auto;">
+                </td>
             </tr>
         </table>
 
@@ -27,7 +28,7 @@
             <tr>
                 <td style="width: 50%; padding: 10px; border-right: 0px solid #ddd; vertical-align: top;">
                     <h4 style="margin-bottom: 5px;">From</h4>
-                    <p style="margin: 0;"><strong>IMS Abdul</strong></p>
+                    <p style="margin: 0;"><strong>Inventory Pro</strong></p>
                     <p style="margin: 0;">402 Shanti Nagar</p>
                     <p style="margin: 0;">Wadala East Mumbai, </p>
                     <p style="margin: 0;">Maharastra, 400037 India.</p>
